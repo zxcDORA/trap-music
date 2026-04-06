@@ -58,7 +58,8 @@ container.innerHTML = '';
 tracks.forEach((t, i) => {
 const row = document.createElement('div');
 row.className = 'flex justify-between border p-2 mb-2';
-
+tracks.push({name:f.name,src:url,cover:''});
+  tracks[tracks.length-1].cover = coverURL;
 ```
 row.innerHTML = `
   ${t.name}
