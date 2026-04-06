@@ -39,9 +39,7 @@ body { background:#050505; }
 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>
 </button>
 
-<button onclick="toggle()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
-</button>
+<button onclick="toggle()" id="playBtn" class="p-2 hover:text-red-500"></button>
 
 <button onclick="next()" class="p-2 hover:text-red-500">
 <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>
@@ -49,22 +47,12 @@ body { background:#050505; }
 </div>
 
 <input type="range" id="progress" min="0" max="100" value="0" class="w-1/3">
+
+<div class="flex items-center gap-2">
+<div id="volumeIcon"></div>
 <input type="range" id="volume" min="0" max="1" step="0.01" value="1" class="w-32">
-
 </div>
-<div>
-<button onclick="prev()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>
-</button>
 
-<button onclick="toggle()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
-</button>
-
-<button onclick="next()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>
-</button>
-</div>
 </div>
 
 <input type="file" id="fileInput" accept="audio/*" multiple hidden>
@@ -78,46 +66,59 @@ let current=0;
 let playing=false;
 
 const audio=document.getElementById('audio');
-const progress=document.getElementById('progress');
-const volume=document.getElementById('volume');
 const now=document.getElementById('now');
 const fileInput=document.getElementById('fileInput');
+const progress=document.getElementById('progress');
+const volume=document.getElementById('volume');
+const playBtn=document.getElementById('playBtn');
+const volumeIcon=document.getElementById('volumeIcon');
 
-// IndexedDB init
+// SVGs
+const playSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>`;
+
+const pauseSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`;
+
+function updatePlayIcon(){
+ playBtn.innerHTML = playing ? pauseSVG : playSVG;
+}
+
+function updateVolumeIcon(){
+ let v = volume.value;
+ if(v == 0){
+  volumeIcon.innerHTML = '🔇';
+ } else if(v < 0.5){
+  volumeIcon.innerHTML = '🔉';
+ } else {
+  volumeIcon.innerHTML = '🔊';
+ }
+}
+
+// IndexedDB
 let request=indexedDB.open('musicDB',1);
 request.onupgradeneeded=e=>{
  db=e.target.result;
  db.createObjectStore('tracks',{keyPath:'id',autoIncrement:true});
 };
-request.onsuccess=e=>{
- db=e.target.result;
- loadTracks();
-};
+request.onsuccess=e=>{ db=e.target.result; loadTracks(); };
 
 function saveTrack(file){
  let tx=db.transaction('tracks','readwrite');
- let store=tx.objectStore('tracks');
- store.add({name:file.name,file});
+ tx.objectStore('tracks').add({name:file.name,file});
 }
 
 function loadTracks(){
  let tx=db.transaction('tracks','readonly');
- let store=tx.objectStore('tracks');
- let req=store.getAll();
- req.onsuccess=()=>{
-  tracks=req.result;
-  renderTracks();
- };
+ let req=tx.objectStore('tracks').getAll();
+ req.onsuccess=()=>{ tracks=req.result; renderTracks(); };
 }
 
 function uploadClick(){ fileInput.click(); }
 
 fileInput.onchange=e=>{
  for(let f of e.target.files){
-  if(!f.type.startsWith('audio/')) continue;
-  saveTrack(f);
+  if(f.type.startsWith('audio/')) saveTrack(f);
  }
- setTimeout(loadTracks,500);
+ setTimeout(loadTracks,300);
 }
 
 function renderTracks(){
@@ -126,110 +127,66 @@ function renderTracks(){
  tracks.forEach((t,i)=>{
   let row=document.createElement('div');
   row.className='flex justify-between p-3 border border-red-900 rounded mb-2';
-
   let url=URL.createObjectURL(t.file);
-
-  row.innerHTML=`
-    <div class="flex gap-3 items-center">
-      <img class="cover" onclick="uploadCover(${i})">
-      <div>${t.name}</div>
-    </div>
-    <div>
-      <button onclick="event.stopPropagation();addToPlaylist(${i})">📂</button>
-    </div>
-  `;
-
-  row.onclick=()=>play(url,t.name);
+  row.innerHTML=`<div>${t.name}</div>`;
+  row.onclick=()=>play(url,t.name,i);
   c.appendChild(row);
  });
 }
 
-function play(src,name){
+function play(src,name,i){
+ current=i;
  audio.src=src;
  audio.play();
  now.innerText=name;
+ playing=true;
+ updatePlayIcon();
 }
 
 function toggle(){
  if(!audio.src) return;
- if(playing){ audio.pause(); }
- else { audio.play(); }
+ playing ? audio.pause() : audio.play();
  playing=!playing;
+ updatePlayIcon();
 }
 
-// progress bar fix
+function next(){
+ if(tracks.length){
+  current=(current+1)%tracks.length;
+  let t=tracks[current];
+  play(URL.createObjectURL(t.file),t.name,current);
+ }
+}
+
+function prev(){
+ if(tracks.length){
+  current=(current-1+tracks.length)%tracks.length;
+  let t=tracks[current];
+  play(URL.createObjectURL(t.file),t.name,current);
+ }
+}
+
+// progress
 audio.addEventListener('timeupdate',()=>{
  if(audio.duration){
-  progress.value = (audio.currentTime/audio.duration)*100;
+  progress.value=(audio.currentTime/audio.duration)*100;
  }
 });
 
 progress.oninput=()=>{
  if(audio.duration){
-  audio.currentTime = (progress.value/100)*audio.duration;
+  audio.currentTime=(progress.value/100)*audio.duration;
  }
 };
 
 volume.oninput=()=>{
- audio.volume = volume.value;
+ audio.volume=volume.value;
+ updateVolumeIcon();
 };
-function next(){
- if(tracks.length){
-  current = (current+1)%tracks.length;
-  play(URL.createObjectURL(tracks[current].file),tracks[current].name);
- }
-}
-function prev(){
- if(tracks.length){
-  current = (current-1+tracks.length)%tracks.length;
-  play(URL.createObjectURL(tracks[current].file),tracks[current].name);
- }
-}
 
-function createPlaylist(){
- let name=prompt('Название');
- if(!name)return;
- playlists.push({name,tracks:[]});
- localStorage.setItem('playlists',JSON.stringify(playlists));
- renderPlaylists();
-}
-
-function addToPlaylist(i){
- let names=playlists.map((p,i)=>i+':'+p.name).join('\n');
- let choice=prompt(names);
- if(playlists[choice]) playlists[choice].tracks.push(i);
- localStorage.setItem('playlists',JSON.stringify(playlists));
-}
-
-function renderPlaylists(){
- let c=document.getElementById('playlists');
- c.innerHTML='';
- playlists.forEach((p,i)=>{
-  let d=document.createElement('div');
-  d.innerText=p.name;
-  d.onclick=()=>showPlaylist(i);
-  c.appendChild(d);
- });
-}
-
-function showPlaylist(i){
- let list=playlists[i];
- let c=document.getElementById('tracks');
- c.innerHTML='';
- list.tracks.forEach(idx=>{
-  let t=tracks[idx];
-  let row=document.createElement('div');
-  row.innerText=t.name;
-  row.onclick=()=>play(URL.createObjectURL(t.file),t.name);
-  c.appendChild(row);
- });
-}
-
-function showLibrary(){ loadTracks(); }
-
-// load playlists
-playlists=JSON.parse(localStorage.getItem('playlists')||'[]');
-renderPlaylists();
+// init
+updatePlayIcon();
+updateVolumeIcon();
 </script>
 
 </body>
