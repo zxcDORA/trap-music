@@ -3,99 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trap Music Player</title>
-    <style>
-        body {
-            background-color: #1E1E1E;
-            color: #FFFFFF;
-            font-family: Arial, sans-serif;
-        }
-        #sidebar {
-            width: 250px;
-            float: left;
-            background-color: #292929;
-            padding: 20px;
-        }
-        #main {
-            margin-left: 270px;
-            padding: 20px;
-        }
-        .playlist {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #353535;
-            border-radius: 5px;
-        }
-        .track {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: #484848;
-            margin: 5px 0;
-            border-radius: 5px;
-        }
-        .currently-playing {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #353535;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #D32F2F;
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
+    <title>Music Playlist</title>
 </head>
 <body>
-    <div id="sidebar">
-        <h2>Playlists</h2>
-        <div class="playlist">Playlist 1</div>
-        <div class="playlist">Playlist 2</div>
-        <div class="playlist">Playlist 3</div>
-        <button onclick="addPlaylist()">Add Playlist</button>
-    </div>
-    <div id="main">
-        <h1>Recommended Tracks</h1>
-        <div class="track">
-            <span>Track 1</span>
-            <button onclick="playSong(1)">Play</button>
-        </div>
-        <div class="track">
-            <span>Track 2</span>
-            <button onclick="playSong(2)">Play</button>
-        </div>
-        <div class="track">
-            <span>Track 3</span>
-            <button onclick="playSong(3)">Play</button>
-        </div>
-        <div class="currently-playing">
-            <h2>Currently Playing</h2>
-            <p id="playingSong">Nothing is playing</p>
-            <button onclick="pauseSong()">Pause</button>
-            <button onclick="nextSong()">Next</button>
-            <button onclick="previousSong()">Previous</button>
-        </div>
-    </div>
+    <h1>My Music Playlist</h1>
+    <input type="text" id="songTitle" placeholder="Song Title">
+    <input type="text" id="songURL" placeholder="Song URL">
+    <button id="addSongBtn">Add Song</button>
+    <h2>Playlist</h2>
+    <ul id="playlist">
+    </ul>
+    <audio id="audioPlayer"></audio>
+    <button id="prevBtn">Previous</button>
+    <button id="playPauseBtn">Play</button>
+    <button id="nextBtn">Next</button>
+
     <script>
-        function playSong(trackNumber) {
-            document.getElementById('playingSong').innerText = 'Now Playing: Track ' + trackNumber;
+        let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+        const playlistElem = document.getElementById('playlist');
+        const audioPlayer = document.getElementById('audioPlayer');
+        let currentIndex = 0;
+
+        function renderPlaylist() {
+            playlistElem.innerHTML = '';
+            playlist.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.textContent = song.title;
+                li.addEventListener('click', () => { currentIndex = index; playSong(); });
+                playlistElem.appendChild(li);
+            });
         }
-        function pauseSong() {
-            document.getElementById('playingSong').innerText += ' (Paused)';
+
+        function playSong() {
+            if (currentIndex >= 0 && currentIndex < playlist.length) {
+                audioPlayer.src = playlist[currentIndex].url;
+                audioPlayer.play();
+            }
         }
-        function nextSong() {
-            // Logic for next song
+
+        function updatePlayButton() {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            playPauseBtn.textContent = audioPlayer.paused ? 'Play' : 'Pause';
         }
-        function previousSong() {
-            // Logic for previous song
-        }
-        function addPlaylist() {
-            // Logic for adding a playlist
-        }
+
+        document.getElementById('addSongBtn').onclick = () => {
+            const title = document.getElementById('songTitle').value;
+            const url = document.getElementById('songURL').value;
+            if (title && url) {
+                playlist.push({ title, url });
+                localStorage.setItem('playlist', JSON.stringify(playlist));
+                renderPlaylist();
+                document.getElementById('songTitle').value = '';
+                document.getElementById('songURL').value = '';
+            }
+        };
+
+        document.getElementById('playPauseBtn').onclick = () => {
+            if (audioPlayer.paused) {
+                playSong();
+            } else {
+                audioPlayer.pause();
+            }
+            updatePlayButton();
+        };
+
+        document.getElementById('nextBtn').onclick = () => {
+            currentIndex = (currentIndex + 1) % playlist.length;
+            playSong();
+        };
+
+        document.getElementById('prevBtn').onclick = () => {
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            playSong();
+        };
+
+        renderPlaylist();
     </script>
 </body>
 </html>
