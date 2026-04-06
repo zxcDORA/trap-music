@@ -12,8 +12,25 @@ body { background:#050505; }
 input[type="range"] {
   -webkit-appearance: none;
   height: 4px;
-  background: #300;
   border-radius: 5px;
+  background: linear-gradient(to right, #ff0000 0%, #ff0000 var(--value, 0%), #300 var(--value, 0%), #300 100%);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff0000;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff0000;
+  cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
