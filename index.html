@@ -4,47 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
-        #player { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        button { margin-top: 10px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="player">
-        <h1>Simple Music Player</h1>
-        <audio id="audioPlayer" controls>
-            <source src="path/to/your/music/file.mp3" type="audio/mpeg">
-            Your browser does not support the audio tag.
-        </audio>
-        <br>
-        <button onclick="playMusic()">Play</button>
-        <button onclick="pauseMusic()">Pause</button>
-        <button onclick="stopMusic()">Stop</button>
-        <h2>Playlist</h2>
-        <ul id="playlist">
-            <li><a href="#" onclick="loadMusic('path/to/your/music/file1.mp3')">Song 1</a></li>
-            <li><a href="#" onclick="loadMusic('path/to/your/music/file2.mp3')">Song 2</a></li>
-            <li><a href="#" onclick="loadMusic('path/to/your/music/file3.mp3')">Song 3</a></li>
-        </ul>
+    <div class="music-player">
+        <h1>Music Player</h1>
+        <div class="playlist">
+            <h2>Playlists</h2>
+            <ul id="playlist">
+                <li>Song 1</li>
+                <li>Song 2</li>
+                <li>Song 3</li>
+            </ul>
+        </div>
+        <div class="controls">
+            <button id="play-btn">Play</button>
+            <button id="pause-btn">Pause</button>
+            <button id="next-btn">Next</button>
+            <button id="prev-btn">Prev</button>
+        </div>
+        <input type="file" id="file-input" accept="audio/*" multiple>
+        <script src="script.js"></script>
     </div>
-    <script>
-        function loadMusic(file) {
-            var player = document.getElementById('audioPlayer');
-            player.src = file;
-            player.play();
-        }
-        function playMusic() {
-            document.getElementById('audioPlayer').play();
-        }
-        function pauseMusic() {
-            document.getElementById('audioPlayer').pause();
-        }
-        function stopMusic() {
-            var player = document.getElementById('audioPlayer');
-            player.pause();
-            player.currentTime = 0;
-        }
-    </script>
 </body>
 </html>
