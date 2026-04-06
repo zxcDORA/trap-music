@@ -11,7 +11,7 @@ const volume = document.getElementById('volume');
 const now = document.getElementById('now');
 const fileInput = document.getElementById('fileInput');
 const search = document.getElementById('search');
-
+localStorage
 function uploadClick() {
   fileInput.click();
 }
