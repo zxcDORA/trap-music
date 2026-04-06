@@ -1,65 +1,111 @@
 body {
-  background: #050505;
-  color: white;
-  margin: 0;
-  font-family: Arial, sans-serif;
+background: #050505;
+color: white;
+font-family: sans-serif;
 }
 
+/* Glow эффект */
 .glow {
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
+box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
 }
 
-.sidebar {
-  width: 250px;
-  background: black;
-  border-right: 1px solid #300;
-  padding: 20px;
+/* Активные кнопки (shuffle, repeat, like) */
+.active {
+color: #ff0000;
+transform: scale(1.15);
+transition: 0.2s;
 }
 
-.main {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+/* Кнопки */
+button {
+transition: 0.2s;
 }
 
-.queue {
-  width: 250px;
-  background: black;
-  border-left: 1px solid #300;
-  padding: 20px;
+button:hover {
+color: #ff0000;
+transform: scale(1.1);
 }
 
+/* Полоски (прогресс + звук) */
+input[type="range"] {
+-webkit-appearance: none;
+height: 4px;
+border-radius: 5px;
+cursor: pointer;
+
+background: linear-gradient(
+to right,
+#ff0000 0%,
+#ff0000 var(--value, 0%),
+#300 var(--value, 0%),
+#300 100%
+);
+}
+
+/* Бегунок */
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: #ff0000;
+cursor: pointer;
+box-shadow: 0 0 5px red;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: #ff0000;
+cursor: pointer;
+}
+
+/* Трек (ряд с песней) */
 .track {
-  padding: 10px;
-  border: 1px solid #400;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  cursor: pointer;
+border: 1px solid #400;
+padding: 8px;
+margin-bottom: 6px;
+border-radius: 6px;
+transition: 0.2s;
 }
 
 .track:hover {
-  background: #500;
+background: #111;
+transform: scale(1.01);
 }
 
+/* Плейлисты */
+.playlist-item {
+cursor: pointer;
+margin-bottom: 5px;
+transition: 0.2s;
+}
+
+.playlist-item:hover {
+color: red;
+}
+
+/* Нижний плеер */
 .player {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: black;
-  border-top: 1px solid #300;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
+background: black;
+border-top: 1px solid #400;
 }
 
-button {
-  background: #900;
-  color: white;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
+/* Иконки */
+svg {
+pointer-events: none;
 }
 
-input[type="range"] {
-  cursor: pointer;
+/* Анимация лайка */
+.liked {
+color: red;
+transform: scale(1.2);
 }
+
+/* Плавность */
+
+* {
+  transition: all 0.2s ease;
+  }
