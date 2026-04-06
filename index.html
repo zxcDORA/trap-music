@@ -10,13 +10,13 @@ body { background:#050505; }
 .glow { box-shadow:0 0 12px rgba(255,0,0,0.7); }
 .scroll::-webkit-scrollbar { width:6px; }
 .scroll::-webkit-scrollbar-thumb { background:#ff0000; }
+.cover { width:40px; height:40px; background:#111; border:1px solid #400; border-radius:6px; object-fit:cover; }
 </style>
 </head>
 <body class="text-white">
 
 <div class="flex h-screen">
 
-<!-- Sidebar -->
 <div class="w-64 bg-black p-5 border-r border-red-900">
 <h1 class="text-2xl text-red-500 mb-6">TRAPMUSIC</h1>
 
@@ -26,7 +26,6 @@ body { background:#050505; }
 <div id="playlists" class="space-y-2"></div>
 </div>
 
-<!-- Main -->
 <div class="flex-1 p-6 overflow-y-auto scroll">
 <input id="search" placeholder="Поиск..." class="w-full p-2 mb-6 bg-black border border-red-900 rounded">
 
@@ -34,18 +33,17 @@ body { background:#050505; }
 <div id="tracks" class="space-y-2"></div>
 </div>
 
-<!-- Queue -->
 <div class="w-64 bg-black p-4 border-l border-red-900">
 <h2 class="mb-4">Очередь</h2>
 <div id="queue"></div>
 </div>
 </div>
 
-<!-- Player -->
 <div class="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900 p-3 flex items-center justify-between">
 <div><div id="now">Нет трека</div></div>
 
 <div class="flex gap-3">
+<!-- 👉 ЗАМЕНИ ИКОНКИ ЗДЕСЬ -->
 <button onclick="prev()">⏮</button>
 <button onclick="toggle()" class="bg-red-600 px-4 py-2 rounded-full glow">▶</button>
 <button onclick="next()">⏭</button>
@@ -75,17 +73,28 @@ const now=document.getElementById('now');
 const fileInput=document.getElementById('fileInput');
 const search=document.getElementById('search');
 
+// 🔥 LOCAL STORAGE LOAD
+function loadData(){
+ tracks = JSON.parse(localStorage.getItem('tracks')||'[]');
+ playlists = JSON.parse(localStorage.getItem('playlists')||'[]');
+ renderTracks();
+ renderPlaylists();
+}
+
+function saveData(){
+ localStorage.setItem('tracks', JSON.stringify(tracks));
+ localStorage.setItem('playlists', JSON.stringify(playlists));
+}
+
 function uploadClick(){ fileInput.click(); }
 
 fileInput.onchange=e=>{
  for(let f of e.target.files){
-  if(!f.type.startsWith('audio/')){
-    alert('Файл не поддерживается: '+f.name);
-    continue;
-  }
+  if(!f.type.startsWith('audio/')) continue;
   let url=URL.createObjectURL(f);
-  tracks.push({name:f.name,src:url});
+  tracks.push({name:f.name,src:url,cover:''});
  }
+ saveData();
  renderTracks();
 }
 
@@ -98,8 +107,12 @@ function renderTracks(){
   row.className='flex justify-between items-center p-3 border border-red-900 rounded hover:bg-red-900 cursor-pointer';
 
   row.innerHTML=`
-    <div>${t.name}</div>
+    <div class="flex items-center gap-3">
+      <img src="${t.cover||''}" class="cover" onclick="event.stopPropagation();uploadCover(${i})">
+      <div>${t.name}</div>
+    </div>
     <div class="flex gap-2">
+      <!-- 👉 ЗАМЕНИ ИКОНКИ ЗДЕСЬ -->
       <button onclick="event.stopPropagation();addQueue(${i})">➕</button>
       <button onclick="event.stopPropagation();addToPlaylist(${i})">📂</button>
       <button onclick="event.stopPropagation();like(${i})">❤️</button>
@@ -111,6 +124,21 @@ function renderTracks(){
  });
 }
 
+function uploadCover(i){
+ let input=document.createElement('input');
+ input.type='file';
+ input.accept='image/*';
+ input.onchange=e=>{
+  let file=e.target.files[0];
+  if(file){
+    tracks[i].cover=URL.createObjectURL(file);
+    saveData();
+    renderTracks();
+  }
+ };
+ input.click();
+}
+
 async function play(i){
  try{
   current=i;
@@ -118,23 +146,18 @@ async function play(i){
   await audio.play();
   now.innerText=tracks[i].name;
   playing=true;
- }catch(err){
-  alert('Ошибка воспроизведения');
- }
+ }catch{}
 }
 
 function toggle(){
  if(!audio.src)return;
- playing?audio.pause():audio.play().catch(()=>{});
+ playing?audio.pause():audio.play();
  playing=!playing;
 }
 
 function next(){
- if(queue.length){
-  play(queue.shift());
- }else if(tracks.length){
-  play((current+1)%tracks.length);
- }
+ if(queue.length) play(queue.shift());
+ else if(tracks.length) play((current+1)%tracks.length);
  renderQueue();
 }
 
@@ -142,7 +165,7 @@ function prev(){ if(tracks.length) play(current); }
 
 function shuffle(){ tracks.sort(()=>Math.random()-0.5); renderTracks(); }
 
-function repeat(){ repeatMode=!repeatMode; alert('Repeat: '+repeatMode); }
+function repeat(){ repeatMode=!repeatMode; }
 
 function addQueue(i){ queue.push(i); renderQueue(); }
 
@@ -159,27 +182,21 @@ function renderQueue(){
 function like(i){ alert('Лайк: '+tracks[i].name); }
 
 function createPlaylist(){
- let name=prompt('Название плейлиста');
+ let name=prompt('Название');
  if(!name)return;
  playlists.push({name,tracks:[]});
+ saveData();
  renderPlaylists();
 }
 
 function addToPlaylist(trackIndex){
- if(!playlists.length){
-  alert('Сначала создай плейлист');
-  return;
- }
-
+ if(!playlists.length){ alert('Сначала создай плейлист'); return; }
  let names=playlists.map((p,i)=> i+': '+p.name).join('\n');
  let choice=prompt('Выбери плейлист:\n'+names);
-
- if(choice===null) return;
  let idx=parseInt(choice);
-
  if(playlists[idx]){
   playlists[idx].tracks.push(trackIndex);
-  alert('Добавлено в '+playlists[idx].name);
+  saveData();
  }
 }
 
@@ -199,7 +216,6 @@ function showPlaylist(i){
  let list=playlists[i];
  let c=document.getElementById('tracks');
  c.innerHTML='';
-
  list.tracks.forEach(idx=>{
   let t=tracks[idx];
   let row=document.createElement('div');
@@ -233,10 +249,13 @@ audio.onended=()=>{
 
 search.oninput=e=>{
  let val=e.target.value.toLowerCase();
- document.querySelectorAll('#tracks div').forEach(d=>{
+ document.querySelectorAll('#tracks > div').forEach(d=>{
   d.style.display=d.innerText.toLowerCase().includes(val)?'flex':'none';
  });
 }
+
+// INIT
+loadData();
 </script>
 
 </body>
