@@ -74,6 +74,7 @@ container.appendChild(row);
 ```
 
 });
+if(!f.type.startsWith('audio/')) continue;
 }
 
 // ===== ПЛЕЕР =====
