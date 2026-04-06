@@ -1,34 +1,65 @@
-.music-player {
-    width: 100%;
-    background-color: #000;
-    color: #fff;
-    padding: 20px;
-    border-radius: 5px;
+body {
+  background: #050505;
+  color: white;
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
 
-.music-player h1 {
-    font-size: 24px;
+.glow {
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
 }
 
-.music-player button {
-    background-color: #ff007f;
-    color: #fff;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 3px;
-    cursor: pointer;
+.sidebar {
+  width: 250px;
+  background: black;
+  border-right: 1px solid #300;
+  padding: 20px;
 }
 
-.music-player button:hover {
-    background-color: #e6006b;
+.main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-.music-player .track-list {
-    list-style: none;
-    padding: 0;
+.queue {
+  width: 250px;
+  background: black;
+  border-left: 1px solid #300;
+  padding: 20px;
 }
 
-.music-player .track-list li {
-    padding: 10px;
-    border-bottom: 1px solid #444;
+.track {
+  padding: 10px;
+  border: 1px solid #400;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.track:hover {
+  background: #500;
+}
+
+.player {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: black;
+  border-top: 1px solid #300;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  background: #900;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  cursor: pointer;
 }
