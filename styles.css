@@ -4,29 +4,37 @@ color: white;
 font-family: sans-serif;
 }
 
-/* Glow эффект */
+/* Glow */
 .glow {
 box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
 }
 
-/* Активные кнопки (shuffle, repeat, like) */
-.active {
-color: #ff0000;
-transform: scale(1.15);
-transition: 0.2s;
-}
-
-/* Кнопки */
+/* КНОПКИ */
 button {
-transition: 0.2s;
+cursor: pointer;
+transition: transform 0.15s ease, color 0.15s ease;
+display: flex;
+align-items: center;
+justify-content: center;
 }
 
+/* hover */
 button:hover {
 color: #ff0000;
-transform: scale(1.1);
+transform: scale(1.08);
 }
 
-/* Полоски (прогресс + звук) */
+/* АКТИВНЫЕ (shuffle, repeat) */
+.active {
+color: #ff0000;
+}
+
+/* ЛАЙК */
+.liked {
+color: red;
+}
+
+/* RANGE */
 input[type="range"] {
 -webkit-appearance: none;
 height: 4px;
@@ -42,7 +50,7 @@ to right,
 );
 }
 
-/* Бегунок */
+/* thumb */
 input[type="range"]::-webkit-slider-thumb {
 -webkit-appearance: none;
 width: 12px;
@@ -50,10 +58,9 @@ height: 12px;
 border-radius: 50%;
 background: #ff0000;
 cursor: pointer;
-box-shadow: 0 0 5px red;
 }
 
-/* Firefox */
+/* firefox */
 input[type="range"]::-moz-range-thumb {
 width: 12px;
 height: 12px;
@@ -62,50 +69,31 @@ background: #ff0000;
 cursor: pointer;
 }
 
-/* Трек (ряд с песней) */
+/* ТРЕК */
 .track {
 border: 1px solid #400;
 padding: 8px;
 margin-bottom: 6px;
 border-radius: 6px;
-transition: 0.2s;
+transition: background 0.2s;
 }
 
 .track:hover {
 background: #111;
-transform: scale(1.01);
 }
 
-/* Плейлисты */
+/* ПЛЕЙЛИСТ */
 .playlist-item {
 cursor: pointer;
 margin-bottom: 5px;
-transition: 0.2s;
 }
 
 .playlist-item:hover {
 color: red;
 }
 
-/* Нижний плеер */
+/* ПЛЕЕР */
 .player {
 background: black;
 border-top: 1px solid #400;
 }
-
-/* Иконки */
-svg {
-pointer-events: none;
-}
-
-/* Анимация лайка */
-.liked {
-color: red;
-transform: scale(1.2);
-}
-
-/* Плавность */
-
-* {
-  transition: all 0.2s ease;
-  }
