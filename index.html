@@ -16,6 +16,7 @@ body { background:#050505; }
 
 <div class="flex h-screen">
 
+<!-- Sidebar -->
 <div class="w-64 bg-black p-5 border-r border-red-900">
 <h1 class="text-2xl text-red-500 mb-6">TRAPMUSIC</h1>
 
@@ -25,19 +26,22 @@ body { background:#050505; }
 <div id="playlists" class="space-y-2"></div>
 </div>
 
+<!-- Main -->
 <div class="flex-1 p-6 overflow-y-auto scroll">
 <input id="search" placeholder="Поиск..." class="w-full p-2 mb-6 bg-black border border-red-900 rounded">
 
 <h2 class="text-lg mb-4">Библиотека</h2>
-<div id="tracks" class="grid grid-cols-5 gap-4"></div>
+<div id="tracks" class="space-y-2"></div>
 </div>
 
+<!-- Queue -->
 <div class="w-64 bg-black p-4 border-l border-red-900">
 <h2 class="mb-4">Очередь</h2>
 <div id="queue"></div>
 </div>
 </div>
 
+<!-- Player -->
 <div class="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900 p-3 flex items-center justify-between">
 <div><div id="now">Нет трека</div></div>
 
@@ -69,6 +73,7 @@ const progress=document.getElementById('progress');
 const volume=document.getElementById('volume');
 const now=document.getElementById('now');
 const fileInput=document.getElementById('fileInput');
+const search=document.getElementById('search');
 
 function uploadClick(){ fileInput.click(); }
 
@@ -87,14 +92,22 @@ fileInput.onchange=e=>{
 function renderTracks(){
  let c=document.getElementById('tracks');
  c.innerHTML='';
+
  tracks.forEach((t,i)=>{
-  let d=document.createElement('div');
-  d.className='p-3 border border-red-900 rounded hover:bg-red-900 cursor-pointer';
-  d.innerHTML=`${t.name}<br>
-  <button onclick="event.stopPropagation();addQueue(${i})">+</button>
-  <button onclick="event.stopPropagation();like(${i})">❤️</button>`;
-  d.onclick=()=>play(i);
-  c.appendChild(d);
+  let row=document.createElement('div');
+  row.className='flex justify-between items-center p-3 border border-red-900 rounded hover:bg-red-900 cursor-pointer';
+
+  row.innerHTML=`
+    <div>${t.name}</div>
+    <div class="flex gap-2">
+      <button onclick="event.stopPropagation();addQueue(${i})">➕</button>
+      <button onclick="event.stopPropagation();addToPlaylist(${i})">📂</button>
+      <button onclick="event.stopPropagation();like(${i})">❤️</button>
+    </div>
+  `;
+
+  row.onclick=()=>play(i);
+  c.appendChild(row);
  });
 }
 
@@ -106,8 +119,7 @@ async function play(i){
   now.innerText=tracks[i].name;
   playing=true;
  }catch(err){
-  console.error(err);
-  alert('Ошибка воспроизведения. Возможно формат не поддерживается');
+  alert('Ошибка воспроизведения');
  }
 }
 
@@ -147,23 +159,58 @@ function renderQueue(){
 function like(i){ alert('Лайк: '+tracks[i].name); }
 
 function createPlaylist(){
- let name=prompt('Название');
+ let name=prompt('Название плейлиста');
  if(!name)return;
  playlists.push({name,tracks:[]});
  renderPlaylists();
 }
 
+function addToPlaylist(trackIndex){
+ if(!playlists.length){
+  alert('Сначала создай плейлист');
+  return;
+ }
+
+ let names=playlists.map((p,i)=> i+': '+p.name).join('\n');
+ let choice=prompt('Выбери плейлист:\n'+names);
+
+ if(choice===null) return;
+ let idx=parseInt(choice);
+
+ if(playlists[idx]){
+  playlists[idx].tracks.push(trackIndex);
+  alert('Добавлено в '+playlists[idx].name);
+ }
+}
+
 function renderPlaylists(){
  let c=document.getElementById('playlists');
  c.innerHTML='';
- playlists.forEach(p=>{
+ playlists.forEach((p,i)=>{
   let d=document.createElement('div');
   d.className='cursor-pointer hover:text-red-500';
-  d.innerText=p.name;
+  d.innerText=p.name+` (${p.tracks.length})`;
+  d.onclick=()=>showPlaylist(i);
   c.appendChild(d);
  });
 }
 
+function showPlaylist(i){
+ let list=playlists[i];
+ let c=document.getElementById('tracks');
+ c.innerHTML='';
+
+ list.tracks.forEach(idx=>{
+  let t=tracks[idx];
+  let row=document.createElement('div');
+  row.className='p-3 border border-red-900 rounded';
+  row.innerText=t.name;
+  row.onclick=()=>play(idx);
+  c.appendChild(row);
+ });
+}
+
+// progress
 audio.addEventListener('timeupdate',()=>{
  if(isFinite(audio.duration)&&audio.duration>0){
   progress.value=(audio.currentTime/audio.duration)*100;
@@ -187,7 +234,7 @@ audio.onended=()=>{
 search.oninput=e=>{
  let val=e.target.value.toLowerCase();
  document.querySelectorAll('#tracks div').forEach(d=>{
-  d.style.display=d.innerText.toLowerCase().includes(val)?'block':'none';
+  d.style.display=d.innerText.toLowerCase().includes(val)?'flex':'none';
  });
 }
 </script>
