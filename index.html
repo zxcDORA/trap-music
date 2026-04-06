@@ -38,9 +38,9 @@ input[type="range"]::-webkit-slider-thumb{
 <div id="now">Нет трека</div>
 
 <div class="flex gap-3">
-<button onclick="prev()">⏮</button>
-<button onclick="toggle()" id="playBtn"></button>
-<button onclick="next()">⏭</button>
+<button onclick="prev()" id="prevBtn" class="p-2"></button>
+<button onclick="toggle()" id="playBtn" class="p-2"></button>
+<button onclick="next()" id="nextBtn" class="p-2"></button>
 <button onclick="toggleShuffle()" id="shuffleBtn"></button>
 <button onclick="toggleRepeat()" id="repeatBtn"></button>
 </div>
@@ -69,13 +69,17 @@ const volume=document.getElementById('volume');
 // SVG
 const playSVG=`<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 3-6 3z"/></svg>`;
 const pauseSVG=`<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>`;
-const shuffleSVG=`<svg width="24" height="24" stroke="currentColor" fill="none"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1"/><path d="M2 6h1"/></svg>`;
-const repeatSVG=shuffleSVG;
-const heartSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M2 9.5a5.5 5.5 0 0 1 9.5-3.6 5.5 5.5 0 0 1 9.5 3.6c0 2-1 3-2 4l-5 5-5-5c-1-1-2-2-2-4"/></svg>`;
-const plusSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`;
-const backSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`;
-const trashSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14H5V6"/></svg>`;
 
+const prevSVG=`<svg width="26" height="26" stroke="currentColor" fill="none"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>`;
+const nextSVG=`<svg width="26" height="26" stroke="currentColor" fill="none"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>`;
+
+const shuffleSVG=`<svg width="24" height="24" stroke="currentColor" fill="none"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/></svg>`;
+const repeatSVG=`<svg width="24" height="24" stroke="currentColor" fill="none"><path d="M3 12a9 9 0 1 0 3-6"/><path d="M3 3v6h6"/></svg>`;
+
+const heartSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M2 9.5a5.5 5.5 0 0 1 9.5-3.6 5.5 5.5 0 0 1 9.5 3.6c0 2-1 3-2 4l-5 5-5-5c-1-1-2-2-2-4"/></svg>`;
+
+prevBtn.innerHTML=prevSVG;
+nextBtn.innerHTML=nextSVG;
 playBtn.innerHTML=playSVG;
 shuffleBtn.innerHTML=shuffleSVG;
 repeatBtn.innerHTML=repeatSVG;
