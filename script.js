@@ -1,49 +1,65 @@
-// script.js
-
-// Functionality for the music player
-let currentTrackIndex = 0;
-const tracks = [];
-
-function playTrack(index) {
-    if(index < 0 || index >= tracks.length) return;
-    const track = tracks[index];
-    console.log(`Playing: ${track.title}`);
-    // Logic to play track goes here
+body {
+  background: #050505;
+  color: white;
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
 
-function pauseTrack() {
-    console.log('Paused current track.');
-    // Logic to pause track goes here
+.glow {
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
 }
 
-function nextTrack() {
-    currentTrackIndex++;
-    if(currentTrackIndex >= tracks.length) currentTrackIndex = 0;
-    playTrack(currentTrackIndex);
+.sidebar {
+  width: 250px;
+  background: black;
+  border-right: 1px solid #300;
+  padding: 20px;
 }
 
-function previousTrack() {
-    currentTrackIndex--;
-    if(currentTrackIndex < 0) currentTrackIndex = tracks.length - 1;
-    playTrack(currentTrackIndex);
+.main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-// Playlist management functionality
-function addTrack(track) {
-    tracks.push(track);
-    console.log(`Added track: ${track.title}`);
+.queue {
+  width: 250px;
+  background: black;
+  border-left: 1px solid #300;
+  padding: 20px;
 }
 
-function removeTrack(index) {
-    if(index < 0 || index >= tracks.length) return;
-    const removed = tracks.splice(index, 1);
-    console.log(`Removed track: ${removed[0].title}`);
+.track {
+  padding: 10px;
+  border: 1px solid #400;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
 }
 
-// Song import functionality
-function importSongs(songArray) {
-    songArray.forEach(song => addTrack(song));
+.track:hover {
+  background: #500;
 }
 
-// Example usage
-importSongs([{ title: 'Song 1' }, { title: 'Song 2' }, { title: 'Song 3' }]);
+.player {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: black;
+  border-top: 1px solid #300;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  background: #900;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  cursor: pointer;
+}
