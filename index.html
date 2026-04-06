@@ -211,17 +211,20 @@ function prev(){
 audio.addEventListener('timeupdate',()=>{
  if(audio.duration){
   progress.value=(audio.currentTime/audio.duration)*100;
+  progress.style.setProperty('--value', progress.value + '%');
  }
 });
 
 progress.oninput=()=>{
  if(audio.duration){
   audio.currentTime=(progress.value/100)*audio.duration;
+  progress.style.setProperty('--value', progress.value + '%');
  }
 };
 
 volume.oninput=()=>{
  audio.volume=volume.value;
+ volume.style.setProperty('--value', (volume.value*100) + '%');
  updateVolumeIcon();
 };
 
