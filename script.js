@@ -1,156 +1,243 @@
 let tracks = [];
-let queue = [];
-let playlists = [];
+let playlists = JSON.parse(localStorage.getItem('playlists') || '[]');
+
 let current = 0;
 let playing = false;
-let repeatMode = false;
+let shuffle = false;
+let repeat = false;
 
 const audio = document.getElementById('audio');
+const now = document.getElementById('now');
 const progress = document.getElementById('progress');
 const volume = document.getElementById('volume');
-const now = document.getElementById('now');
+const playBtn = document.getElementById('playBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const repeatBtn = document.getElementById('repeatBtn');
+const backBtn = document.getElementById('backBtn');
 const fileInput = document.getElementById('fileInput');
-const search = document.getElementById('search');
-localStorage
+
+// SVG
+const playSVG = `<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 3-6 3z"/></svg>`;
+const pauseSVG = `<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>`;
+
+const shuffleSVG = `<svg width="24" height="24" stroke="currentColor" fill="none"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/></svg>`;
+const repeatSVG = shuffleSVG;
+
+const heartSVG = `<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M2 9.5a5.5 5.5 0 0 1 9.5-3.6 5.5 5.5 0 0 1 9.5 3.6c0 2-1 3-2 4l-5 5-5-5c-1-1-2-2-2-4"/></svg>`;
+const plusSVG = `<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`;
+const trashSVG = `<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M3 6h18"/><path d="M19 6v14H5V6"/></svg>`;
+const backSVG = `<svg width="20" height="20" stroke="currentColor" fill="none"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`;
+
+// init icons
+playBtn.innerHTML = playSVG;
+shuffleBtn.innerHTML = shuffleSVG;
+repeatBtn.innerHTML = repeatSVG;
+backBtn.innerHTML = backSVG;
+
+// ===== ЗАГРУЗКА =====
 function uploadClick() {
-  fileInput.click();
+fileInput.click();
 }
-updatePlayIcon()
+
 fileInput.onchange = e => {
-  for (let f of e.target.files) {
-    if (!f.type.startsWith('audio/')) {
-      alert('Файл не поддерживается: ' + f.name);
-      continue;
-    }
-    let url = URL.createObjectURL(f);
-    tracks.push({ name: f.name, src: url });
-  }
-  renderTracks();
+for (let f of e.target.files) {
+tracks.push({
+name: f.name,
+src: URL.createObjectURL(f),
+liked: false
+});
+}
+renderTracks();
 };
 
+// ===== РЕНДЕР =====
 function renderTracks() {
-  let c = document.getElementById('tracks');
-  c.innerHTML = '';
+const container = document.getElementById('tracks');
+container.innerHTML = '';
 
-  tracks.forEach((t, i) => {
-    let d = document.createElement('div');
-    d.className = 'track';
-    d.innerHTML = `
-      ${t.name}<br>
-      <button onclick="event.stopPropagation(); addQueue(${i})">+</button>
-      <button onclick="event.stopPropagation(); like(${i})">❤️</button>
-    `;
-    d.onclick = () => play(i);
-    c.appendChild(d);
-  });
+tracks.forEach((t, i) => {
+const row = document.createElement('div');
+row.className = 'flex justify-between border p-2 mb-2';
+
+```
+row.innerHTML = `
+  ${t.name}
+  <div class="flex gap-2">
+    <button onclick="event.stopPropagation(); like(${i})">${heartSVG}</button>
+    <button onclick="event.stopPropagation(); addToPlaylist(${i})">${plusSVG}</button>
+    <button onclick="event.stopPropagation(); removeTrack(${i})">${trashSVG}</button>
+  </div>
+`;
+
+row.onclick = () => play(i);
+container.appendChild(row);
+```
+
+});
 }
 
-async function play(i) {
-  try {
-    current = i;
-    audio.src = tracks[i].src;
-    await audio.play();
-    now.innerText = tracks[i].name;
-    playing = true;
-  } catch (err) {
-    alert('Ошибка воспроизведения');
-  }
+// ===== ПЛЕЕР =====
+function play(i) {
+current = i;
+audio.src = tracks[i].src;
+audio.play();
+playing = true;
+now.innerText = tracks[i].name;
+updatePlayIcon();
 }
 
 function toggle() {
-  if (!audio.src) return;
-  playing ? audio.pause() : audio.play();
-  playing = !playing;
+if (!audio.src) return;
+
+playing ? audio.pause() : audio.play();
+playing = !playing;
+updatePlayIcon();
 }
 
+function updatePlayIcon() {
+playBtn.innerHTML = playing ? pauseSVG : playSVG;
+}
+
+// ===== НАВИГАЦИЯ =====
 function next() {
-  if (queue.length) {
-    play(queue.shift());
-  } else if (tracks.length) {
-    play((current + 1) % tracks.length);
-  }
-  renderQueue();
+if (shuffle) {
+current = Math.floor(Math.random() * tracks.length);
+} else {
+current = (current + 1) % tracks.length;
+}
+play(current);
 }
 
 function prev() {
-  if (tracks.length) play(current);
+current = (current - 1 + tracks.length) % tracks.length;
+play(current);
 }
 
-function shuffle() {
-  tracks.sort(() => Math.random() - 0.5);
-  renderTracks();
+// ===== SHUFFLE / REPEAT =====
+function toggleShuffle() {
+shuffle = !shuffle;
+shuffleBtn.classList.toggle('active');
 }
 
-function repeat() {
-  repeatMode = !repeatMode;
-  alert('Repeat: ' + repeatMode);
+function toggleRepeat() {
+repeat = !repeat;
+repeatBtn.classList.toggle('active');
 }
 
-function addQueue(i) {
-  queue.push(i);
-  renderQueue();
-}
+audio.onended = () => {
+repeat ? play(current) : next();
+};
 
-function renderQueue() {
-  let q = document.getElementById('queue');
-  q.innerHTML = '';
-  queue.forEach(i => {
-    let d = document.createElement('div');
-    d.innerText = tracks[i].name;
-    q.appendChild(d);
-  });
-}
-
+// ===== ЛАЙК =====
 function like(i) {
-  alert('Лайк: ' + tracks[i].name);
+tracks[i].liked = !tracks[i].liked;
+renderTracks();
 }
 
+// ===== ПЛЕЙЛИСТЫ =====
 function createPlaylist() {
-  let name = prompt('Название');
-  if (!name) return;
-  playlists.push({ name, tracks: [] });
-  renderPlaylists();
+const name = prompt('Название плейлиста');
+if (!name) return;
+
+playlists.push({ name, tracks: [] });
+savePlaylists();
+renderPlaylists();
+}
+
+function addToPlaylist(i) {
+if (!playlists.length) {
+alert('Сначала создай плейлист');
+return;
+}
+
+const list = playlists.map((p, i) => i + ': ' + p.name).join('\n');
+const choice = parseInt(prompt(list));
+
+if (!isNaN(choice) && playlists[choice]) {
+playlists[choice].tracks.push(i);
+savePlaylists();
+}
 }
 
 function renderPlaylists() {
-  let c = document.getElementById('playlists');
-  c.innerHTML = '';
-  playlists.forEach(p => {
-    let d = document.createElement('div');
-    d.innerText = p.name;
-    c.appendChild(d);
-  });
+const container = document.getElementById('playlists');
+container.innerHTML = '';
+
+playlists.forEach((p, i) => {
+const row = document.createElement('div');
+
+```
+row.innerHTML = `
+  ${p.name}
+  <button onclick="event.stopPropagation(); removePlaylist(${i})">${trashSVG}</button>
+`;
+
+row.onclick = () => showPlaylist(i);
+container.appendChild(row);
+```
+
+});
 }
 
+function showPlaylist(i) {
+const container = document.getElementById('tracks');
+container.innerHTML = '';
+
+playlists[i].tracks.forEach(idx => {
+const t = tracks[idx];
+const row = document.createElement('div');
+
+```
+row.innerText = t.name;
+row.onclick = () => play(idx);
+
+container.appendChild(row);
+```
+
+});
+}
+
+function removePlaylist(i) {
+playlists.splice(i, 1);
+savePlaylists();
+renderPlaylists();
+}
+
+function savePlaylists() {
+localStorage.setItem('playlists', JSON.stringify(playlists));
+}
+
+function showLibrary() {
+renderTracks();
+}
+
+// ===== УДАЛЕНИЕ =====
+function removeTrack(i) {
+tracks.splice(i, 1);
+renderTracks();
+}
+
+// ===== ПРОГРЕСС =====
 audio.addEventListener('timeupdate', () => {
-  if (isFinite(audio.duration) && audio.duration > 0) {
-    progress.value = (audio.currentTime / audio.duration) * 100;
-  }
+if (audio.duration) {
+progress.value = (audio.currentTime / audio.duration) * 100;
+progress.style.setProperty('--value', progress.value + '%');
+}
 });
 
 progress.oninput = () => {
-  if (isFinite(audio.duration) && audio.duration > 0) {
-    let t = (progress.value / 100) * audio.duration;
-    if (isFinite(t)) audio.currentTime = t;
-  }
-};
-
-volume.oninput = () => {
-  audio.volume = volume.value;
-};
-
-audio.onended = () => {
-  if (repeatMode) play(current);
-  else next();
-};
-
-search.oninput = e => {
-  let val = e.target.value.toLowerCase();
-  document.querySelectorAll('#tracks div').forEach(d => {
-    d.style.display = d.innerText.toLowerCase().includes(val)
-      ? 'block'
-      : 'none';
-  });
+if (audio.duration) {
+audio.currentTime = (progress.value / 100) * audio.duration;
 progress.style.setProperty('--value', progress.value + '%');
-volume.style.setProperty('--value', (volume.value*100) + '%');
+}
 };
+
+// ===== ГРОМКОСТЬ =====
+volume.oninput = () => {
+audio.volume = volume.value;
+volume.style.setProperty('--value', (volume.value * 100) + '%');
+};
+
+// INIT
+renderTracks();
+renderPlaylists();
