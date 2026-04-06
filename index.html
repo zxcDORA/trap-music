@@ -86,33 +86,38 @@ function uploadClick(){ fileInput.click(); }
 fileInput.onchange=e=>{
  for(let f of e.target.files){
   if(!f.type.startsWith('audio/')) continue;
+
   const url = URL.createObjectURL(f);
 
-// попытка вытащить обложку
-let coverURL = '';
-try {
- const reader = new FileReader();
- reader.onload = function(e) {
-   const buffer = e.target.result;
-   const view = new DataView(buffer);
-   for (let i = 0; i < view.byteLength - 10; i++) {
-     if (
-       view.getUint8(i) === 0x41 && // A
-       view.getUint8(i+1) === 0x50 && // P
-       view.getUint8(i+2) === 0x49 && // I
-       view.getUint8(i+3) === 0x43
-     ) {
-       let size = view.getUint32(i+4);
-       let start = i + 10;
-       let blob = new Blob([buffer.slice(start, start + size)]);
-       coverURL = URL.createObjectURL(blob);
-     }
-   }
- };
- reader.readAsArrayBuffer(f);
-} catch(e){}
+  // безопасная обложка (без ломания кода)
+  let coverURL = '';
 
-tracks.push({name:f.name,src:url,cover:coverURL});
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const buffer = e.target.result;
+    const view = new DataView(buffer);
+
+    for (let i = 0; i < view.byteLength - 10; i++) {
+      if (
+        view.getUint8(i) === 0x41 &&
+        view.getUint8(i+1) === 0x50 &&
+        view.getUint8(i+2) === 0x49 &&
+        view.getUint8(i+3) === 0x43
+      ) {
+        const size = view.getUint32(i+4);
+        const start = i + 10;
+        const blob = new Blob([buffer.slice(start, start + size)]);
+        coverURL = URL.createObjectURL(blob);
+        tracks[tracks.length-1].cover = coverURL;
+        break;
+      }
+    }
+  };
+
+  reader.readAsArrayBuffer(f);
+
+  // добавляем СРАЗУ (это фикс бага)
+  tracks.push({name:f.name,src:url,cover:''});
  }
  renderTracks();
 }
