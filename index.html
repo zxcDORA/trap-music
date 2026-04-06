@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TrapMusic Final+</title>
+<title>TrapMusic Final Stable</title>
 <script src="https://cdn.tailwindcss.com"></script>
+
 <style>
 body{background:#050505;color:white}
 button{transition:0.2s}
@@ -20,18 +21,23 @@ input[type="range"]::-webkit-slider-thumb{
 }
 </style>
 </head>
+
 <body>
 
 <div class="flex h-screen">
 
+<!-- SIDEBAR -->
 <div class="w-64 bg-black p-4 border-r border-red-900 flex flex-col gap-3">
 <h1 class="text-red-500">TRAPMUSIC</h1>
-<button onclick="uploadClick()" class="w-full text-left">Загрузить</button>
-<button onclick="createPlaylist()" class="w-full text-left">+ Плейлист</button>
-<button onclick="showLibrary()" class="w-full text-left">⬅ Библиотека</button>
+
+<button onclick="uploadClick()">Загрузить</button>
+<button onclick="createPlaylist()">+ Плейлист</button>
+<button onclick="showLibrary()">⬅ Библиотека</button>
+
 <div id="playlists" class="mt-4"></div>
 </div>
 
+<!-- TRACKS -->
 <div class="flex-1 p-4" id="tracks"></div>
 
 </div>
@@ -41,7 +47,7 @@ input[type="range"]::-webkit-slider-thumb{
 
 <!-- LEFT -->
 <div class="flex items-center gap-3">
-<img id="cover" src="" class="w-12 h-12 bg-gray-800 rounded"/>
+<img id="cover" class="w-12 h-12 bg-gray-800 rounded">
 <div>
 <div id="trackName">Нет трека</div>
 <div id="time">0:00 / 0:00</div>
@@ -74,6 +80,7 @@ input[type="range"]::-webkit-slider-thumb{
 <script>
 let tracks=[];
 let playlists=JSON.parse(localStorage.getItem('playlists')||'[]');
+
 let current=0,playing=false,shuffle=false,repeat=false,currentPlaylist=null;
 
 const audio=document.getElementById('audio');
@@ -83,73 +90,82 @@ const fileInput=document.getElementById('fileInput');
 
 function uploadClick(){ fileInput.click(); }
 
+// ЗАГРУЗКА
 fileInput.onchange=e=>{
  for(let f of e.target.files){
   if(!f.type.startsWith('audio/')) continue;
 
-  const url = URL.createObjectURL(f);
+  const url=URL.createObjectURL(f);
 
-  // безопасная обложка (без ломания кода)
-  let coverURL = '';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const buffer = e.target.result;
-    const view = new DataView(buffer);
-
-    for (let i = 0; i < view.byteLength - 10; i++) {
-      if (
-        view.getUint8(i) === 0x41 &&
-        view.getUint8(i+1) === 0x50 &&
-        view.getUint8(i+2) === 0x49 &&
-        view.getUint8(i+3) === 0x43
-      ) {
-        const size = view.getUint32(i+4);
-        const start = i + 10;
-        const blob = new Blob([buffer.slice(start, start + size)]);
-        coverURL = URL.createObjectURL(blob);
-        tracks[tracks.length-1].cover = coverURL;
-        break;
-      }
-    }
-  };
-
-  reader.readAsArrayBuffer(f);
-
-  // добавляем СРАЗУ (это фикс бага)
+  // добавляем сразу (важно!)
   tracks.push({name:f.name,src:url,cover:''});
+  const index=tracks.length-1;
+
+  // безопасная попытка достать обложку
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const buffer=ev.target.result;
+      const view=new DataView(buffer);
+
+      for(let i=0;i<view.byteLength-10;i++){
+        if(
+          view.getUint8(i)==0x41 &&
+          view.getUint8(i+1)==0x50 &&
+          view.getUint8(i+2)==0x49 &&
+          view.getUint8(i+3)==0x43
+        ){
+          const size=view.getUint32(i+4);
+          const start=i+10;
+          const blob=new Blob([buffer.slice(start,start+size)]);
+          tracks[index].cover=URL.createObjectURL(blob);
+          break;
+        }
+      }
+    }catch(e){}
+  };
+  reader.readAsArrayBuffer(f);
  }
  renderTracks();
-}
+};
 
+// РЕНДЕР
 function renderTracks(){
  currentPlaylist=null;
  let c=document.getElementById('tracks');
  c.innerHTML='';
+
  tracks.forEach((t,i)=>{
   let d=document.createElement('div');
   d.className='flex justify-between border p-2 mb-2';
-  d.innerHTML=`${t.name}
-  <button onclick="event.stopPropagation();removeTrack(${i})">🗑</button>`;
+
+  d.innerHTML=`
+    ${t.name}
+    <button onclick="event.stopPropagation();removeTrack(${i})">🗑</button>
+  `;
+
   d.onclick=()=>play(i);
   c.appendChild(d);
  });
 }
 
+// PLAY
 function play(i){
  current=i;
  audio.src=tracks[i].src;
  audio.play();
  playing=true;
+
  document.getElementById('trackName').innerText=tracks[i].name;
 
-// обложка
-let cover = document.getElementById('cover');
-cover.src = tracks[i].cover || '';
-cover.style.background = tracks[i].cover ? 'none' : '#222';
+ let cover=document.getElementById('cover');
+ cover.src=tracks[i].cover||'';
+ cover.style.background=tracks[i].cover?'none':'#222';
+
  update();
 }
 
+// CONTROL
 function toggle(){
  if(!audio.src)return;
  playing?audio.pause():audio.play();
@@ -173,40 +189,40 @@ function prev(){
  play(current);
 }
 
-function toggleShuffle(){ shuffle=!shuffle;shuffleBtn.classList.toggle('active'); }
-function toggleRepeat(){ repeat=!repeat;repeatBtn.classList.toggle('active'); }
+function toggleShuffle(){
+ shuffle=!shuffle;
+ document.getElementById('shuffleBtn').classList.toggle('active');
+}
 
-audio.onended=()=>{ repeat?play(current):next(); }
+function toggleRepeat(){
+ repeat=!repeat;
+ document.getElementById('repeatBtn').classList.toggle('active');
+}
 
+audio.onended=()=> repeat?play(current):next();
+
+// ПЛЕЙЛИСТЫ
 function createPlaylist(){
  let name=prompt('Название');
  if(!name)return;
  playlists.push({name,tracks:[]});
- save(); renderPlaylists();
+ save();
+ renderPlaylists();
 }
-
-function addToPlaylist(i){
- if(!playlists.length){alert('Создай плейлист');return;}
- let list=playlists.map((p,i)=>i+': '+p.name).join('\n');
- let c=parseInt(prompt(list));
- if(!isNaN(c)&&playlists[c]){
-  playlists[c].tracks.push(i);
-  save();
- }
-}
-
-function removeTrack(i){ tracks.splice(i,1); renderTracks(); }
 
 function renderPlaylists(){
  let c=document.getElementById('playlists');
  c.innerHTML='';
+
  playlists.forEach((p,i)=>{
   let d=document.createElement('div');
-  d.className='flex justify-between items-center mb-1 cursor-pointer';
+  d.className='flex justify-between cursor-pointer';
+
   d.innerHTML=`
     <span>${p.name}</span>
     <button onclick="event.stopPropagation();removePlaylist(${i})">🗑</button>
   `;
+
   d.onclick=()=>showPlaylist(i);
   c.appendChild(d);
  });
@@ -217,19 +233,24 @@ function removePlaylist(i){
  save();
  renderPlaylists();
  showLibrary();
-});
 }
 
 function showPlaylist(i){
  currentPlaylist=i;
  let c=document.getElementById('tracks');
  c.innerHTML='';
+
  playlists[i].tracks.forEach((idx,ind)=>{
   let t=tracks[idx];
+
   let d=document.createElement('div');
   d.className='flex justify-between border p-2 mb-2';
-  d.innerHTML=`${t.name}
-  <button onclick="event.stopPropagation();removeFromPlaylist(${ind})">🗑</button>`;
+
+  d.innerHTML=`
+    ${t.name}
+    <button onclick="event.stopPropagation();removeFromPlaylist(${ind})">🗑</button>
+  `;
+
   d.onclick=()=>play(idx);
   c.appendChild(d);
  });
@@ -237,13 +258,24 @@ function showPlaylist(i){
 
 function removeFromPlaylist(ind){
  playlists[currentPlaylist].tracks.splice(ind,1);
- save(); showPlaylist(currentPlaylist);
+ save();
+ showPlaylist(currentPlaylist);
 }
 
-function save(){ localStorage.setItem('playlists',JSON.stringify(playlists)); }
-function showLibrary(){ renderTracks(); }
+function removeTrack(i){
+ tracks.splice(i,1);
+ renderTracks();
+}
 
-// TIME + PROGRESS
+function save(){
+ localStorage.setItem('playlists',JSON.stringify(playlists));
+}
+
+function showLibrary(){
+ renderTracks();
+}
+
+// TIME
 function format(t){
  let m=Math.floor(t/60)||0;
  let s=Math.floor(t%60)||0;
@@ -254,13 +286,16 @@ audio.addEventListener('timeupdate',()=>{
  if(audio.duration){
   progress.value=(audio.currentTime/audio.duration)*100;
   progress.style.setProperty('--value',progress.value+'%');
+
   document.getElementById('time').innerText=
    format(audio.currentTime)+' / '+format(audio.duration);
  }
 });
 
 progress.oninput=()=>{
- if(audio.duration){ audio.currentTime=(progress.value/100)*audio.duration; }
+ if(audio.duration){
+  audio.currentTime=(progress.value/100)*audio.duration;
+ }
 };
 
 volume.oninput=()=>{
@@ -268,6 +303,7 @@ volume.oninput=()=>{
  volume.style.setProperty('--value',(volume.value*100)+'%');
 };
 
+// INIT
 renderTracks();
 renderPlaylists();
 </script>
