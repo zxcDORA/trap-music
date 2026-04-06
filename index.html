@@ -44,9 +44,15 @@ input[type="range"]::-webkit-slider-thumb {
 <div class="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900 p-3 flex items-center justify-between gap-4">
 <div id="now" class="w-1/4 truncate">Нет трека</div>
 <div class="flex items-center gap-4">
-<button onclick="prev()">⏮</button>
-<button onclick="toggle()" id="playBtn">▶</button>
-<button onclick="next()">⏭</button>
+<button onclick="prev()" class="p-2 hover:text-red-500">
+<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>
+</button>
+
+<button onclick="toggle()" id="playBtn" class="p-2 hover:text-red-500"></button>
+
+<button onclick="next()" class="p-2 hover:text-red-500">
+<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>
+</button>
 </div>
 <input type="range" id="progress" min="0" max="100" value="0" class="w-1/3">
 <div class="flex items-center gap-2">
@@ -152,10 +158,19 @@ function play(src,name,i){
  playing=true;
 }
 
+const playSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>`;
+
+const pauseSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`;
+
+function updatePlayIcon(){
+ playBtn.innerHTML = playing ? pauseSVG : playSVG;
+}
+
 function toggle(){
  if(!audio.src) return;
- playing?audio.pause():audio.play();
+ if(playing){ audio.pause(); } else { audio.play(); }
  playing=!playing;
+ updatePlayIcon();
 }
 
 function next(){ if(tracks.length) play(tracks[(current+1)%tracks.length].src,tracks[(current+1)%tracks.length].name,(current+1)%tracks.length); }
