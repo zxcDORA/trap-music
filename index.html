@@ -86,7 +86,33 @@ function uploadClick(){ fileInput.click(); }
 fileInput.onchange=e=>{
  for(let f of e.target.files){
   if(!f.type.startsWith('audio/')) continue;
-  tracks.push({name:f.name,src:URL.createObjectURL(f)});
+  const url = URL.createObjectURL(f);
+
+// попытка вытащить обложку
+let coverURL = '';
+try {
+ const reader = new FileReader();
+ reader.onload = function(e) {
+   const buffer = e.target.result;
+   const view = new DataView(buffer);
+   for (let i = 0; i < view.byteLength - 10; i++) {
+     if (
+       view.getUint8(i) === 0x41 && // A
+       view.getUint8(i+1) === 0x50 && // P
+       view.getUint8(i+2) === 0x49 && // I
+       view.getUint8(i+3) === 0x43
+     ) {
+       let size = view.getUint32(i+4);
+       let start = i + 10;
+       let blob = new Blob([buffer.slice(start, start + size)]);
+       coverURL = URL.createObjectURL(blob);
+     }
+   }
+ };
+ reader.readAsArrayBuffer(f);
+} catch(e){}
+
+tracks.push({name:f.name,src:url,cover:coverURL});
  }
  renderTracks();
 }
@@ -111,6 +137,11 @@ function play(i){
  audio.play();
  playing=true;
  document.getElementById('trackName').innerText=tracks[i].name;
+
+// обложка
+let cover = document.getElementById('cover');
+cover.src = tracks[i].cover || '';
+cover.style.background = tracks[i].cover ? 'none' : '#222';
  update();
 }
 
@@ -166,10 +197,22 @@ function renderPlaylists(){
  c.innerHTML='';
  playlists.forEach((p,i)=>{
   let d=document.createElement('div');
-  d.innerText=p.name;
+  d.className='flex justify-between items-center mb-1 cursor-pointer';
+  d.innerHTML=`
+    <span>${p.name}</span>
+    <button onclick="event.stopPropagation();removePlaylist(${i})">🗑</button>
+  `;
   d.onclick=()=>showPlaylist(i);
   c.appendChild(d);
  });
+}
+
+function removePlaylist(i){
+ playlists.splice(i,1);
+ save();
+ renderPlaylists();
+ showLibrary();
+});
 }
 
 function showPlaylist(i){
