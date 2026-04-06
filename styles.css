@@ -1,99 +1,76 @@
 body {
-background: #050505;
-color: white;
-font-family: sans-serif;
-}
-
-/* Glow */
-.glow {
-box-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
+  background: #050505;
+  color: white;
+  font-family: sans-serif;
 }
 
 /* КНОПКИ */
 button {
-cursor: pointer;
-transition: transform 0.15s ease, color 0.15s ease;
-display: flex;
-align-items: center;
-justify-content: center;
+  transition: 0.2s;
+  cursor: pointer;
 }
 
-/* hover */
 button:hover {
-color: #ff0000;
-transform: scale(1.08);
+  color: #ff0000;
+  transform: scale(1.05);
 }
 
-/* АКТИВНЫЕ (shuffle, repeat) */
+/* АКТИВНЫЕ КНОПКИ (shuffle / repeat) */
 .active {
-color: #ff0000;
+  color: #ff0000;
 }
 
-/* ЛАЙК */
-.liked {
-color: red;
-}
-
-/* RANGE */
+/* ПОЛОСКИ (прогресс и звук) */
 input[type="range"] {
--webkit-appearance: none;
-height: 4px;
-border-radius: 5px;
-cursor: pointer;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 5px;
 
-background: linear-gradient(
-to right,
-#ff0000 0%,
-#ff0000 var(--value, 0%),
-#300 var(--value, 0%),
-#300 100%
-);
+  /* тёмный + яркий красный */
+  background: linear-gradient(
+    to right,
+    #ff0000 0%,
+    #ff0000 var(--value, 0%),
+    #300 var(--value, 0%),
+    #300 100%
+  );
+
+  outline: none;
 }
 
-/* thumb */
+/* КРУГЛАЯ ТОЧКА */
 input[type="range"]::-webkit-slider-thumb {
--webkit-appearance: none;
-width: 12px;
-height: 12px;
-border-radius: 50%;
-background: #ff0000;
-cursor: pointer;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff0000;
+  cursor: pointer;
 }
 
-/* firefox */
-input[type="range"]::-moz-range-thumb {
-width: 12px;
-height: 12px;
-border-radius: 50%;
-background: #ff0000;
-cursor: pointer;
+/* SIDEBAR */
+#playlists div {
+  padding: 5px 0;
+  border-bottom: 1px solid #200;
 }
 
-/* ТРЕК */
-.track {
-border: 1px solid #400;
-padding: 8px;
-margin-bottom: 6px;
-border-radius: 6px;
-transition: background 0.2s;
+/* ТРЕКИ */
+#tracks div {
+  border-color: #300;
+  transition: 0.2s;
 }
 
-.track:hover {
-background: #111;
+#tracks div:hover {
+  background: #111;
 }
 
-/* ПЛЕЙЛИСТ */
-.playlist-item {
-cursor: pointer;
-margin-bottom: 5px;
+/* ОБЛОЖКА */
+#cover {
+  object-fit: cover;
+  border: 1px solid #300;
 }
 
-.playlist-item:hover {
-color: red;
-}
-
-/* ПЛЕЕР */
-.player {
-background: black;
-border-top: 1px solid #400;
+/* НИЖНИЙ ПЛЕЕР */
+audio {
+  display: none;
 }
