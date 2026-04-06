@@ -15,7 +15,6 @@ input[type="range"] {
   border-radius: 5px;
   background: linear-gradient(to right, #ff0000 0%, #ff0000 var(--value, 0%), #300 var(--value, 0%), #300 100%);
 }
-
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
@@ -24,38 +23,11 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ff0000;
   cursor: pointer;
 }
-
-input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff0000;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff0000;
-  cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff0000;
-  cursor: pointer;
-}
-
 </style>
 </head>
 <body class="text-white">
 
 <div class="flex h-screen">
-
 <div class="w-64 bg-black p-5 border-r border-red-900">
 <h1 class="text-2xl text-red-500 mb-6">TRAPMUSIC</h1>
 <button onclick="uploadClick()" class="bg-red-600 w-full py-2 rounded glow mb-4">Загрузить</button>
@@ -65,42 +37,28 @@ input[type="range"]::-moz-range-thumb {
 </div>
 
 <div class="flex-1 p-6 overflow-y-auto">
-<input id="search" placeholder="Поиск..." class="w-full p-2 mb-6 bg-black border border-red-900 rounded">
 <div id="tracks"></div>
 </div>
-
 </div>
 
 <div class="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900 p-3 flex items-center justify-between gap-4">
-
 <div id="now" class="w-1/4 truncate">Нет трека</div>
-
 <div class="flex items-center gap-4">
-<button onclick="prev()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>
-</button>
-
-<button onclick="toggle()" id="playBtn" class="p-2 hover:text-red-500"></button>
-
-<button onclick="next()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>
-</button>
+<button onclick="prev()">⏮</button>
+<button onclick="toggle()" id="playBtn">▶</button>
+<button onclick="next()">⏭</button>
 </div>
-
 <input type="range" id="progress" min="0" max="100" value="0" class="w-1/3">
-
 <div class="flex items-center gap-2">
-<div id="volumeIcon"></div>
+<div id="volumeIcon">🔊</div>
 <input type="range" id="volume" min="0" max="1" step="0.01" value="1" class="w-32">
 </div>
-
 </div>
 
 <input type="file" id="fileInput" accept="audio/*" multiple hidden>
 <audio id="audio"></audio>
 
 <script>
-let db;
 let tracks=[];
 let playlists=[];
 let current=0;
@@ -111,55 +69,57 @@ const now=document.getElementById('now');
 const fileInput=document.getElementById('fileInput');
 const progress=document.getElementById('progress');
 const volume=document.getElementById('volume');
-const playBtn=document.getElementById('playBtn');
-const volumeIcon=document.getElementById('volumeIcon');
 
-// SVGs
-const playSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>`;
-
-const pauseSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`;
-
-function updatePlayIcon(){
- playBtn.innerHTML = playing ? pauseSVG : playSVG;
+// 🔥 FIX: загрузка плейлистов
+function loadPlaylists(){
+ playlists = JSON.parse(localStorage.getItem('playlists') || '[]');
+ renderPlaylists();
 }
 
-function updateVolumeIcon(){
- let v = volume.value;
- if(v == 0){
-  volumeIcon.innerHTML = '🔇';
- } else if(v < 0.5){
-  volumeIcon.innerHTML = '🔉';
- } else {
-  volumeIcon.innerHTML = '🔊';
- }
+function savePlaylists(){
+ localStorage.setItem('playlists', JSON.stringify(playlists));
 }
 
-// IndexedDB
-let request=indexedDB.open('musicDB',1);
-request.onupgradeneeded=e=>{
- db=e.target.result;
- db.createObjectStore('tracks',{keyPath:'id',autoIncrement:true});
-};
-request.onsuccess=e=>{ db=e.target.result; loadTracks(); };
-
-function saveTrack(file){
- let tx=db.transaction('tracks','readwrite');
- tx.objectStore('tracks').add({name:file.name,file});
+function createPlaylist(){
+ let name = prompt('Название плейлиста');
+ if(!name) return;
+ playlists.push({name, tracks:[]});
+ savePlaylists();
+ renderPlaylists();
 }
 
-function loadTracks(){
- let tx=db.transaction('tracks','readonly');
- let req=tx.objectStore('tracks').getAll();
- req.onsuccess=()=>{ tracks=req.result; renderTracks(); };
+function renderPlaylists(){
+ let c=document.getElementById('playlists');
+ c.innerHTML='';
+ playlists.forEach((p,i)=>{
+  let d=document.createElement('div');
+  d.className='cursor-pointer hover:text-red-500 mb-2';
+  d.innerText=p.name + ' ('+p.tracks.length+')';
+  d.onclick=()=>showPlaylist(i);
+  c.appendChild(d);
+ });
+}
+
+function showPlaylist(i){
+ let c=document.getElementById('tracks');
+ c.innerHTML='';
+ playlists[i].tracks.forEach(idx=>{
+  let t=tracks[idx];
+  let row=document.createElement('div');
+  row.innerText=t.name;
+  row.onclick=()=>play(t.src,t.name,idx);
+  c.appendChild(row);
+ });
 }
 
 function uploadClick(){ fileInput.click(); }
 
 fileInput.onchange=e=>{
  for(let f of e.target.files){
-  if(f.type.startsWith('audio/')) saveTrack(f);
+  let url=URL.createObjectURL(f);
+  tracks.push({name:f.name, src:url});
  }
- setTimeout(loadTracks,300);
+ renderTracks();
 }
 
 function renderTracks(){
@@ -167,12 +127,21 @@ function renderTracks(){
  c.innerHTML='';
  tracks.forEach((t,i)=>{
   let row=document.createElement('div');
-  row.className='flex justify-between p-3 border border-red-900 rounded mb-2';
-  let url=URL.createObjectURL(t.file);
-  row.innerHTML=`<div>${t.name}</div>`;
-  row.onclick=()=>play(url,t.name,i);
+  row.className='flex justify-between p-2 border border-red-900 mb-2';
+  row.innerHTML=`${t.name} <button onclick="event.stopPropagation();addToPlaylist(${i})">📂</button>`;
+  row.onclick=()=>play(t.src,t.name,i);
   c.appendChild(row);
  });
+}
+
+function addToPlaylist(i){
+ if(!playlists.length){ alert('Сначала создай плейлист'); return; }
+ let list=playlists.map((p,i)=> i+': '+p.name).join('\n');
+ let choice=parseInt(prompt(list));
+ if(!isNaN(choice) && playlists[choice]){
+  playlists[choice].tracks.push(i);
+  savePlaylists();
+ }
 }
 
 function play(src,name,i){
@@ -181,31 +150,16 @@ function play(src,name,i){
  audio.play();
  now.innerText=name;
  playing=true;
- updatePlayIcon();
 }
 
 function toggle(){
  if(!audio.src) return;
- playing ? audio.pause() : audio.play();
+ playing?audio.pause():audio.play();
  playing=!playing;
- updatePlayIcon();
 }
 
-function next(){
- if(tracks.length){
-  current=(current+1)%tracks.length;
-  let t=tracks[current];
-  play(URL.createObjectURL(t.file),t.name,current);
- }
-}
-
-function prev(){
- if(tracks.length){
-  current=(current-1+tracks.length)%tracks.length;
-  let t=tracks[current];
-  play(URL.createObjectURL(t.file),t.name,current);
- }
-}
+function next(){ if(tracks.length) play(tracks[(current+1)%tracks.length].src,tracks[(current+1)%tracks.length].name,(current+1)%tracks.length); }
+function prev(){ if(tracks.length) play(tracks[(current-1+tracks.length)%tracks.length].src,tracks[(current-1+tracks.length)%tracks.length].name,(current-1+tracks.length)%tracks.length); }
 
 // progress
 audio.addEventListener('timeupdate',()=>{
@@ -218,19 +172,18 @@ audio.addEventListener('timeupdate',()=>{
 progress.oninput=()=>{
  if(audio.duration){
   audio.currentTime=(progress.value/100)*audio.duration;
-  progress.style.setProperty('--value', progress.value + '%');
  }
 };
 
 volume.oninput=()=>{
  audio.volume=volume.value;
  volume.style.setProperty('--value', (volume.value*100) + '%');
- updateVolumeIcon();
 };
 
+function showLibrary(){ renderTracks(); }
+
 // init
-updatePlayIcon();
-updateVolumeIcon();
+loadPlaylists();
 </script>
 
 </body>
