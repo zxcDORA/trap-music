@@ -15,7 +15,7 @@ localStorage
 function uploadClick() {
   fileInput.click();
 }
-
+updatePlayIcon()
 fileInput.onchange = e => {
   for (let f of e.target.files) {
     if (!f.type.startsWith('audio/')) {
