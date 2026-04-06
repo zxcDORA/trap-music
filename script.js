@@ -151,4 +151,6 @@ search.oninput = e => {
       ? 'block'
       : 'none';
   });
+progress.style.setProperty('--value', progress.value + '%');
+volume.style.setProperty('--value', (volume.value*100) + '%');
 };
