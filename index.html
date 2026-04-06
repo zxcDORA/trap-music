@@ -8,197 +8,173 @@
 <style>
 body { background:#050505; }
 .glow { box-shadow:0 0 12px rgba(255,0,0,0.7); }
-.cover { width:40px;height:40px;border-radius:6px;object-fit:cover;background:#111;border:1px solid #400; }
-input[type="range"] {
-  -webkit-appearance: none;
-  height: 4px;
-  border-radius: 5px;
-  background: linear-gradient(to right, #ff0000 0%, #ff0000 var(--value, 0%), #300 var(--value, 0%), #300 100%);
+.active { color:#ff0000; transform:scale(1.1); }
+input[type="range"]{
+ -webkit-appearance:none;height:4px;border-radius:5px;
+ background:linear-gradient(to right,#ff0000 0%,#ff0000 var(--value,0%),#300 var(--value,0%),#300 100%);
 }
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff0000;
-  cursor: pointer;
+input[type="range"]::-webkit-slider-thumb{
+ -webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#ff0000;
 }
 </style>
 </head>
 <body class="text-white">
 
 <div class="flex h-screen">
+
 <div class="w-64 bg-black p-5 border-r border-red-900">
-<h1 class="text-2xl text-red-500 mb-6">TRAPMUSIC</h1>
-<button onclick="uploadClick()" class="bg-red-600 w-full py-2 rounded glow mb-4">Загрузить</button>
-<button onclick="createPlaylist()" class="bg-red-900 w-full py-2 rounded mb-4">+ Плейлист</button>
-<button onclick="showLibrary()" class="bg-gray-800 w-full py-2 rounded mb-4">⬅ Библиотека</button>
+<h1 class="text-red-500 text-xl mb-4">TRAPMUSIC</h1>
+<button onclick="uploadClick()" class="bg-red-600 w-full mb-2">Загрузить</button>
+<button onclick="createPlaylist()" class="bg-red-900 w-full mb-2">+ Плейлист</button>
+<button onclick="showLibrary()" id="backBtn" class="bg-gray-800 w-full mb-2"></button>
 <div id="playlists"></div>
 </div>
 
-<div class="flex-1 p-6 overflow-y-auto">
-<div id="tracks"></div>
-</div>
+<div class="flex-1 p-4" id="tracks"></div>
+
 </div>
 
-<div class="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900 p-3 flex items-center justify-between gap-4">
-<div id="now" class="w-1/4 truncate">Нет трека</div>
-<div class="flex items-center gap-4">
-<button onclick="prev()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 18-6-6 6-6"/><path d="M7 6v12"/></svg>
-</button>
+<div class="fixed bottom-0 w-full bg-black border-t border-red-900 p-2 flex justify-between items-center">
+<div id="now">Нет трека</div>
 
-<button onclick="toggle()" id="playBtn" class="p-2 hover:text-red-500"></button>
-
-<button onclick="next()" class="p-2 hover:text-red-500">
-<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 18 6-6-6-6"/><path d="M17 6v12"/></svg>
-</button>
+<div class="flex gap-3">
+<button onclick="prev()">⏮</button>
+<button onclick="toggle()" id="playBtn"></button>
+<button onclick="next()">⏭</button>
+<button onclick="toggleShuffle()" id="shuffleBtn"></button>
+<button onclick="toggleRepeat()" id="repeatBtn"></button>
 </div>
+
 <input type="range" id="progress" min="0" max="100" value="0" class="w-1/3">
+
 <div class="flex items-center gap-2">
-<div id="volumeIcon">🔊</div>
-<input type="range" id="volume" min="0" max="1" step="0.01" value="1" class="w-32">
+<div id="volumeIcon"></div>
+<input type="range" id="volume" min="0" max="1" step="0.01" value="1">
 </div>
 </div>
 
-<input type="file" id="fileInput" accept="audio/*" multiple hidden>
+<input type="file" id="fileInput" multiple hidden>
 <audio id="audio"></audio>
 
 <script>
 let tracks=[];
-let playlists=[];
-let current=0;
-let playing=false;
+let playlists=JSON.parse(localStorage.getItem('playlists')||'[]');
+let current=0,playing=false,shuffle=false,repeat=false;
 
 const audio=document.getElementById('audio');
 const now=document.getElementById('now');
-const fileInput=document.getElementById('fileInput');
 const progress=document.getElementById('progress');
 const volume=document.getElementById('volume');
 
-// 🔥 FIX: загрузка плейлистов
-function loadPlaylists(){
- playlists = JSON.parse(localStorage.getItem('playlists') || '[]');
- renderPlaylists();
-}
+// SVG
+const playSVG=`<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><path d="M9 9l6 3-6 3z"/></svg>`;
+const pauseSVG=`<svg width="28" height="28" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>`;
+const shuffleSVG=`<svg width="24" height="24" stroke="currentColor" fill="none"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1"/><path d="M2 6h1"/></svg>`;
+const repeatSVG=shuffleSVG;
+const heartSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M2 9.5a5.5 5.5 0 0 1 9.5-3.6 5.5 5.5 0 0 1 9.5 3.6c0 2-1 3-2 4l-5 5-5-5c-1-1-2-2-2-4"/></svg>`;
+const plusSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`;
+const backSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`;
+const trashSVG=`<svg width="20" height="20" stroke="currentColor" fill="none"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14H5V6"/></svg>`;
 
-function savePlaylists(){
- localStorage.setItem('playlists', JSON.stringify(playlists));
-}
-
-function createPlaylist(){
- let name = prompt('Название плейлиста');
- if(!name) return;
- playlists.push({name, tracks:[]});
- savePlaylists();
- renderPlaylists();
-}
-
-function renderPlaylists(){
- let c=document.getElementById('playlists');
- c.innerHTML='';
- playlists.forEach((p,i)=>{
-  let d=document.createElement('div');
-  d.className='cursor-pointer hover:text-red-500 mb-2';
-  d.innerText=p.name + ' ('+p.tracks.length+')';
-  d.onclick=()=>showPlaylist(i);
-  c.appendChild(d);
- });
-}
-
-function showPlaylist(i){
- let c=document.getElementById('tracks');
- c.innerHTML='';
- playlists[i].tracks.forEach(idx=>{
-  let t=tracks[idx];
-  let row=document.createElement('div');
-  row.innerText=t.name;
-  row.onclick=()=>play(t.src,t.name,idx);
-  c.appendChild(row);
- });
-}
+playBtn.innerHTML=playSVG;
+shuffleBtn.innerHTML=shuffleSVG;
+repeatBtn.innerHTML=repeatSVG;
+backBtn.innerHTML=backSVG;
 
 function uploadClick(){ fileInput.click(); }
-
 fileInput.onchange=e=>{
- for(let f of e.target.files){
-  let url=URL.createObjectURL(f);
-  tracks.push({name:f.name, src:url});
- }
+ for(let f of e.target.files){ tracks.push({name:f.name,src:URL.createObjectURL(f),liked:false}); }
  renderTracks();
 }
 
 function renderTracks(){
- let c=document.getElementById('tracks');
- c.innerHTML='';
+ let c=document.getElementById('tracks'); c.innerHTML='';
  tracks.forEach((t,i)=>{
-  let row=document.createElement('div');
-  row.className='flex justify-between p-2 border border-red-900 mb-2';
-  row.innerHTML=`${t.name} <button onclick="event.stopPropagation();addToPlaylist(${i})">📂</button>`;
-  row.onclick=()=>play(t.src,t.name,i);
-  c.appendChild(row);
+  let d=document.createElement('div');
+  d.className='flex justify-between border p-2 mb-2';
+  d.innerHTML=`${t.name}
+  <div class='flex gap-2'>
+   <button onclick='event.stopPropagation();like(${i})'>${heartSVG}</button>
+   <button onclick='event.stopPropagation();addToPlaylist(${i})'>${plusSVG}</button>
+   <button onclick='event.stopPropagation();removeTrack(${i})'>${trashSVG}</button>
+  </div>`;
+  d.onclick=()=>play(i);
+  c.appendChild(d);
  });
 }
 
+function play(i){
+ current=i; audio.src=tracks[i].src; audio.play(); playing=true;
+ now.innerText=tracks[i].name; updatePlay();
+}
+
+function toggle(){ if(!audio.src)return; playing?audio.pause():audio.play(); playing=!playing; updatePlay(); }
+function updatePlay(){ playBtn.innerHTML=playing?pauseSVG:playSVG; }
+
+function next(){ if(shuffle){ current=Math.floor(Math.random()*tracks.length); }
+ else current=(current+1)%tracks.length;
+ play(current);
+}
+function prev(){ current=(current-1+tracks.length)%tracks.length; play(current); }
+
+function toggleShuffle(){ shuffle=!shuffle; shuffleBtn.classList.toggle('active'); }
+function toggleRepeat(){ repeat=!repeat; repeatBtn.classList.toggle('active'); }
+
+audio.onended=()=>{ repeat?play(current):next(); }
+
+function like(i){ tracks[i].liked=!tracks[i].liked; renderTracks(); }
+
+function createPlaylist(){
+ let name=prompt('Название'); if(!name)return;
+ playlists.push({name,tracks:[]}); savePL(); renderPL();
+}
+
 function addToPlaylist(i){
- if(!playlists.length){ alert('Сначала создай плейлист'); return; }
- let list=playlists.map((p,i)=> i+': '+p.name).join('\n');
- let choice=parseInt(prompt(list));
- if(!isNaN(choice) && playlists[choice]){
-  playlists[choice].tracks.push(i);
-  savePlaylists();
- }
+ let list=playlists.map((p,i)=>i+':'+p.name).join('\n');
+ let c=prompt(list);
+ if(playlists[c]){ playlists[c].tracks.push(i); savePL(); }
 }
 
-function play(src,name,i){
- current=i;
- audio.src=src;
- audio.play();
- now.innerText=name;
- playing=true;
+function removeTrack(i){ tracks.splice(i,1); renderTracks(); }
+
+function renderPL(){
+ let c=document.getElementById('playlists'); c.innerHTML='';
+ playlists.forEach((p,i)=>{
+  let d=document.createElement('div');
+  d.innerHTML=`${p.name} <button onclick='event.stopPropagation();removePL(${i})'>${trashSVG}</button>`;
+  d.onclick=()=>showPL(i);
+  c.appendChild(d);
+ });
 }
 
-const playSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>`;
-
-const pauseSVG=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`;
-
-function updatePlayIcon(){
- playBtn.innerHTML = playing ? pauseSVG : playSVG;
+function showPL(i){
+ let c=document.getElementById('tracks'); c.innerHTML='';
+ playlists[i].tracks.forEach(idx=>{
+  let d=document.createElement('div'); d.innerText=tracks[idx].name;
+  d.onclick=()=>play(idx);
+  c.appendChild(d);
+ });
 }
 
-function toggle(){
- if(!audio.src) return;
- if(playing){ audio.pause(); } else { audio.play(); }
- playing=!playing;
- updatePlayIcon();
-}
+function removePL(i){ playlists.splice(i,1); savePL(); renderPL(); }
 
-function next(){ if(tracks.length) play(tracks[(current+1)%tracks.length].src,tracks[(current+1)%tracks.length].name,(current+1)%tracks.length); }
-function prev(){ if(tracks.length) play(tracks[(current-1+tracks.length)%tracks.length].src,tracks[(current-1+tracks.length)%tracks.length].name,(current-1+tracks.length)%tracks.length); }
+function savePL(){ localStorage.setItem('playlists',JSON.stringify(playlists)); }
+function showLibrary(){ renderTracks(); }
 
 // progress
-audio.addEventListener('timeupdate',()=>{
- if(audio.duration){
-  progress.value=(audio.currentTime/audio.duration)*100;
-  progress.style.setProperty('--value', progress.value + '%');
- }
-});
+progress.oninput=()=>{ audio.currentTime=(progress.value/100)*audio.duration; progress.style.setProperty('--value',progress.value+'%'); }
 
-progress.oninput=()=>{
- if(audio.duration){
-  audio.currentTime=(progress.value/100)*audio.duration;
- }
-};
+audio.addEventListener('timeupdate',()=>{
+ if(audio.duration){ progress.value=(audio.currentTime/audio.duration)*100;
+ progress.style.setProperty('--value',progress.value+'%'); }
+});
 
 volume.oninput=()=>{
  audio.volume=volume.value;
- volume.style.setProperty('--value', (volume.value*100) + '%');
-};
+ volume.style.setProperty('--value',(volume.value*100)+'%');
+}
 
-function showLibrary(){ renderTracks(); }
-
-// init
-loadPlaylists();
+renderTracks(); renderPL();
 </script>
 
 </body>
