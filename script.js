@@ -45,7 +45,66 @@ fileInput.onchange = e => {
   for (let f of e.target.files) {
     if (!f.type.startsWith('audio/')) continue;
 
-    const url = URL.createObjectURL(f);
+    fileInput.onchange = async e => {
+
+  for (let f of e.target.files) {
+
+    if (!f.type.startsWith('audio/')) continue;
+
+    const fileName = Date.now() + '-' + f.name;
+
+    // upload mp3 в Supabase Storage
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('music')
+      .upload(fileName, f);
+
+    if (uploadError) {
+      console.log(uploadError);
+      continue;
+    }
+async function loadTracks() {
+
+  const { data, error } = await supabaseClient
+    .from('tracks')
+    .select('*');
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  tracks = data || [];
+
+  renderTracks();
+}
+    // получаем постоянный URL
+    const { data } = supabaseClient
+      .storage
+      .from('music')
+      .getPublicUrl(fileName);
+
+    const track = {
+      name: f.name,
+      src: data.publicUrl,
+      cover: ''
+    };
+
+    // сохраняем в таблицу
+    const { error } = await supabaseClient
+      .from('tracks')
+      .insert(track);
+
+    if (error) {
+      console.log(error);
+      continue;
+    }
+
+    tracks.push(track);
+  }
+
+  renderTracks();
+};
 
     // добавляем сразу (фикс багов)
     const newTrack = {
