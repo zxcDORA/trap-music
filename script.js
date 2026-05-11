@@ -1,4 +1,4 @@
-const supabaseUrl = 'https://quqnipyynbwwdwlfqwek.supabase.coL'
+const supabaseUrl = 'https://quqnipyynbwwdwlfqwek.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cW5pcHl5bmJ3d2R3bGZxd2VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Mjg3NDEsImV4cCI6MjA5NDEwNDc0MX0.Zjymm_1WR9LcBwGw_sptYIOnOTjlL5dLlhxaArD_j6M'
 
 const supabaseClient = supabase.createClient(
@@ -24,16 +24,6 @@ const fileInput = document.getElementById('fileInput');
 function uploadClick() {
   fileInput.click();
 }
-await supabase.from('posts').insert({
-  title: 'test'
-})
-
-
-  const { data } = await supabase
-    .from('posts')
-    .select('*')
-
-  return (
     <div>
       {data.map(post => (
         <p key={post.id}>{post.title}</p>
@@ -41,11 +31,7 @@ await supabase.from('posts').insert({
     </div>
   )
 }
-fileInput.onchange = e => {
-  for (let f of e.target.files) {
-    if (!f.type.startsWith('audio/')) continue;
-
-    fileInput.onchange = async e => {
+fileInput.onchange = async e => {
 
   for (let f of e.target.files) {
 
@@ -53,6 +39,44 @@ fileInput.onchange = e => {
 
     const fileName = Date.now() + '-' + f.name;
 
+    // upload в storage
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('music')
+      .upload(fileName, f);
+
+    if (uploadError) {
+      console.log(uploadError);
+      continue;
+    }
+
+    // постоянный URL
+    const { data } = supabaseClient
+      .storage
+      .from('music')
+      .getPublicUrl(fileName);
+
+    const track = {
+      name: f.name,
+      src: data.publicUrl,
+      cover: ''
+    };
+
+    // сохраняем в БД
+    const { error } = await supabaseClient
+      .from('tracks')
+      .insert(track);
+
+    if (error) {
+      console.log(error);
+      continue;
+    }
+
+    tracks.push(track);
+  }
+
+  renderTracks();
+};
     // upload mp3 в Supabase Storage
     const { error: uploadError } = await supabaseClient
       .storage
@@ -346,6 +370,21 @@ volume.oninput = () => {
   volume.style.setProperty('--value', volume.value * 100 + '%');
 };
 async function loadTracks() {
+  const { data, error } = await supabaseClient
+    .from('tracks')
+    .select('*');
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  tracks = data || [];
+
+  renderTracks();
+}
+async function loadTracks() {
+
   const { data, error } = await supabaseClient
     .from('tracks')
     .select('*');
