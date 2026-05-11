@@ -275,5 +275,5 @@ volume.oninput = () => {
 };
 
 // запуск
-renderTracks();
+loadTracks();
 renderPlaylists();
