@@ -77,12 +77,12 @@ input[type="range"]::-webkit-slider-thumb{
 <input type="file" id="fileInput" accept="audio/*" multiple hidden>
 <audio id="audio"></audio>
 
-<script>
+ <script>
 let tracks=[];
 let playlists=JSON.parse(localStorage.getItem('playlists')||'[]');
 
 let current=0,playing=false,shuffle=false,repeat=false,currentPlaylist=null;
-
+src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"
 const audio=document.getElementById('audio');
 const progress=document.getElementById('progress');
 const volume=document.getElementById('volume');
