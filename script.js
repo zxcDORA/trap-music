@@ -48,7 +48,20 @@ fileInput.onchange = e => {
     const url = URL.createObjectURL(f);
 
     // добавляем сразу (фикс багов)
-    tracks.push({ name: f.name, src: url, cover: '' });
+    const newTrack = {
+  name: f.name,
+  src: url,
+  cover: ''
+};
+
+const { data, error } = await supabaseClient
+  .from('tracks')
+  .insert(newTrack)
+  .select();
+
+if (!error && data) {
+  tracks.push(data[0]);
+}
     const index = tracks.length - 1;
 
     // читаем обложку (если есть)
@@ -273,7 +286,20 @@ volume.oninput = () => {
   audio.volume = volume.value;
   volume.style.setProperty('--value', volume.value * 100 + '%');
 };
+async function loadTracks() {
+  const { data, error } = await supabaseClient
+    .from('tracks')
+    .select('*');
 
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  tracks = data || [];
+
+  renderTracks();
+}
 // запуск
 loadTracks();
 renderPlaylists();
