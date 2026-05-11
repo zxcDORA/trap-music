@@ -20,9 +20,7 @@ await supabase.from('posts').insert({
   title: 'test'
 })
 
-import { supabase } from '@/lib/supabase'
 
-export default async function Page() {
   const { data } = await supabase
     .from('posts')
     .select('*')
