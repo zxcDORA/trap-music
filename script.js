@@ -16,7 +16,25 @@ const fileInput = document.getElementById('fileInput');
 function uploadClick() {
   fileInput.click();
 }
+await supabase.from('posts').insert({
+  title: 'test'
+})
 
+import { supabase } from '@/lib/supabase'
+
+export default async function Page() {
+  const { data } = await supabase
+    .from('posts')
+    .select('*')
+
+  return (
+    <div>
+      {data.map(post => (
+        <p key={post.id}>{post.title}</p>
+      ))}
+    </div>
+  )
+}
 fileInput.onchange = e => {
   for (let f of e.target.files) {
     if (!f.type.startsWith('audio/')) continue;
