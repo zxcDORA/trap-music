@@ -1,3 +1,11 @@
+const supabaseUrl = 'https://quqnipyynbwwdwlfqwek.supabase.coL'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1cW5pcHl5bmJ3d2R3bGZxd2VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1Mjg3NDEsImV4cCI6MjA5NDEwNDc0MX0.Zjymm_1WR9LcBwGw_sptYIOnOTjlL5dLlhxaArD_j6M'
+
+const supabaseClient = supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+)
+
 let tracks = [];
 let playlists = JSON.parse(localStorage.getItem('playlists') || '[]');
 
